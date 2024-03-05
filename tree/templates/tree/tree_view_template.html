@@ -1,0 +1,27 @@
+<!-- {# The textarea form #} -->
+<form action="/{{argID}}/edit/{{node.id}}/" method="post" id="form{{node.id}}">
+    {% csrf_token %}
+</form>
+
+<details id="{{ node.id }}">
+    <form action="/{{argID}}/add_child/{{node.id}}/" method="post" id="add_rebuttal">
+        {% csrf_token %}
+    </form>
+    <form action="/{{argID}}/add_sibling/{{node.id}}/" method="post" id="add_new_rebuttal">
+        {% csrf_token %}
+    </form>
+
+    <!-- The buttons in the expander -->
+    <summary>
+        <textarea name="arg" form="form{{ node.id }}" id="box{{ node.id }}">{{ node.name }}</textarea>
+        <button form="add_rebuttal">Add Rebuttal</button>
+        {% if child_num == 0 %}
+            <button form="add_new_rebuttal">Add New Rebuttal</button>
+        {% endif %}
+    </summary>
+
+    <!-- {# Recurse and add the child lists #} -->
+    {%for ch in node.children %}
+        {% include "tree/tree_view_template.html" with node=ch child_num=forloop.revcounter0 %}
+    {%endfor%}
+</details>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debate</title>
+    <script defer src={% static 'tree/script.js' %}></script>
+    <link rel="stylesheet" href={% static "tree/style.css"%} />
+    <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+</head>
+<body>
+    {% comment %} {% url 'tree:edit/' premise.id%} {% endcomment %}
+    <form action="/{{argID}}/edit/{{premise.id}}/" method="post" id="form{{premise.id}}">
+        {% csrf_token %}
+        <textarea form="form{{premise.id}}" name="arg" autofocus id="premise-box">{{premise.name}}</textarea>
+    </form>
+    {%for ch in premise.children %}
+        {% include "tree/tree_view_template.html" with node=ch child_num=forloop.revcounter0 %}
+    {%endfor%}
+    {% comment %} {%include "tree/tree_view_template.html" with node=premise%} {% endcomment %}
+    <br/>
+    <button id="close-all">Fold all Arguments</button>
+    <button id="expand-all">Expand all Arguments</button>
+    <form action="/{{argID}}/load/" method="post" id="load-form">
+        {% csrf_token %}
+    </form>
+    {% comment %} <input type="submit" value="Load Debate"> {% endcomment %}
+    <input type="file" id='file-loader' accept="application/json" />
+    <button> <a href="data:application/json;charset=utf-8,{{ json }}" download="debate.json">Save Debate</a></button>
+    <form action="/{{argID}}/clear/" method="post" id="clear">
+        {% csrf_token %}
+        <input type="submit" value="Clear Whole Arguement" onclick="return confirm('Clear whole arguement? All unsaved arguements will be lost.')"/>
+    </form>
+</body>
+</html>
