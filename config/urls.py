@@ -1,5 +1,5 @@
 """
-URL configuration for untitled project.
+URL configuration for config project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.0/topics/http/urls/
@@ -16,8 +16,28 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from tree import views
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("<int:argID>/", include("tree.urls")),
+    # Debates
+    path("api/<str:argID>/edit/<int:id>/", views.edit),
+    path("api/<str:argID>/add_sibling/<int:id>/", views.add_sibling),
+    path("api/<str:argID>/add_child/<int:id>/", views.add_child),
+    path("api/<str:argID>/load/", views.load),
+    path("api/<str:argID>/clear/", views.clear),
+    path('api/<str:argID>/delete/<int:id>/', views.delete),
+    path('api/<str:argID>/new_debate/', views.new_debate),
+    path('api/<str:argID>/get_debate/', views.get_debate),
+    # Definitions
+    path('api/<str:argID>/get_defs/', views.get_defs),
+    path('api/<str:argID>/clear_defs/', views.clear_defs),
+    path('api/<str:argID>/new_def/', views.new_def),
+    path('api/<str:argID>/edit_def/<int:idx>/<str:which>/', views.edit_def),
+    path('api/<str:argID>/load_defs/', views.load_defs),
+    # MISC
+    path('api/coffee/', views.i_cant_brew_coffee),
+    path('api/<str:argID>/debug/', views.debug)
+    # TODO add definition urls
 ]
