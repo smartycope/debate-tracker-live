@@ -45,6 +45,7 @@ export default function App() {
     var [debate, setDebate] = useState(defaultDebate)
     var [defs, setDefs] = useState([]) // DEBUG ? [{'word': 'sign', 'definition': 'uhh, its a sign.'}] : []
     var [openSidebar, setOpenSidebar] = useState(false)
+    var [noServer, setNoServer] = useState(false)
     const argID = '1'
     const API = API_URL + argID + '/'
 
@@ -116,7 +117,12 @@ export default function App() {
 
     // To confirm before reloading or closing
     useEffect(() => {
-        axios.get(API + 'get_debate/').then(({data}) => {console.log(data); setDebate(data)})
+        try {
+            axios.get(API + 'get_debate/').then(({data}) => {console.log(data); setDebate(data)})
+        } catch{
+            setNoServer(true)
+            console.log('Here!');
+        }
 
         const unloadCallback = (event) => {
           event.preventDefault();
@@ -126,7 +132,10 @@ export default function App() {
 
         window.addEventListener("beforeunload", unloadCallback);
         return () => window.removeEventListener("beforeunload", unloadCallback);
-    }, [])
+    }, [API])
+
+    if (noServer)
+        return <h2>Server Error (is it running?)</h2>
 
     return (
     <div className="App">

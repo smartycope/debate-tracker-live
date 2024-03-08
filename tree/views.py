@@ -15,7 +15,6 @@ from .serializers import *
 from typing import Literal
 
 
-
 # Structure: {argID: rootNode}
 debates = {'1': Node('premise', id=0, children=[Node('arg1', id=1, children=[])])}
 # Structure: {argID: [{"word": "", "definition": ""}, ]}
