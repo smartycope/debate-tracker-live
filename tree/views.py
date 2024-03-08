@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from anytree import Node, find, find_by_attr
+from anytree import Node, find, find_by_attr, RenderTree
 from anytree.importer import JsonImporter
 from anytree.exporter import JsonExporter
 from anytree.search import findall
@@ -17,16 +17,19 @@ from typing import Literal
 
 
 # Structure: {argID: rootNode}
-debates = {'1': Node('premise', id=0, children=[Node('arg1', id=1)])}
+debates = {'1': Node('premise', id=0, children=[Node('arg1', id=1, children=[])])}
 # Structure: {argID: [{"word": "", "definition": ""}, ]}
 definitions = {}
+
+def _parse_response(request):
+    return list(request.data.keys())[0]
 
 def _countNodes(tree):
     return len(findall(tree, lambda: True))
 
 def ensure_debate_exists(func):
     def inner(request, argID, *args, **kwargs):
-        print('current debates:', debates)
+        print('Now outdated debate:\n', RenderTree(debates[argID]).by_attr())
         if argID not in debates:
             print(f'{argID} (of type {type(argID)}) is not a debate')
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -43,7 +46,7 @@ def edit(request, id, argID):
     node = find_by_attr(debates[argID], id, 'id')
     if not node:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    node.name = request.data
+    node.name = _parse_response(request)
     return Response(status=status.HTTP_202_ACCEPTED)
 
 @api_view(['POST'])
@@ -71,7 +74,7 @@ def add_child(request, id, argID):
 def load(request, argID):
     global debates
     # TODO: request.POST['contents'] may need to be replaced by reponse.data
-    debates[argID] = JsonImporter().import_(request.data)
+    debates[argID] = JsonImporter().import_(_parse_response(request))
     # return HttpResponseRedirect(reverse("tree:index", kwargs={"argID": argID}))
     return Response(status=status.HTTP_201_CREATED)
 
@@ -108,8 +111,14 @@ def new_debate(request, argID):
 @ensure_debate_exists
 def get_debate(request, argID):
     global debates
+    # print('sending', JsonExporter().export(debates[argID]))
     # return Response(JsonExporter().export(debates), content_type='application/json')
     return HttpResponse(JsonExporter().export(debates[argID]))
+
+@api_view(['GET'])
+def check_exists(request, argID):
+    global debates
+    return HttpResponse(argID in debates)
 
 
 # Definitions
@@ -137,14 +146,14 @@ def new_def(request, argID):
 @ensure_debate_exists
 def edit_def(request, argID, idx, which:Literal['word', 'definition']):
     global definitions
-    definitions[argID][idx][which] = request.data
+    definitions[argID][idx][which] = _parse_response(request)
     return Response(status=status.HTTP_202_ACCEPTED)
 
 @api_view(['POST'])
 @ensure_debate_exists
 def load_defs(request, argID):
     global definitions
-    definitions[argID] = request.data
+    definitions[argID] = _parse_response(request)
     return Response(status=status.HTTP_201_CREATED)
 
 

@@ -3,13 +3,13 @@ import {getNodeCount, addToTree, editText, removeNode} from "./treeFuncs";
 import axios from "axios";
 import { API_URL } from "./constants"
 
+
 export default function Arg({node, debate, setDebate, argID, last=false, premise=false}) {
     var content = useRef()
     const API = API_URL + argID + '/'
-    console.log(API);
 
     // Recurse
-    const childs = node.children.map(child => <Arg
+    const childs = node.children?.map(child => <Arg
         key={child.id}
         node={child}
         debate={debate}

@@ -7,28 +7,28 @@ import axios from "axios";
 import { API_URL } from "./constants"
 
 
-const debugDefault = {
-    name: "Premise!",
-    id: 0,
-    children: [
-        {
-            name: "Rebuttal 1",
-            id: 1,
-            children: [
-                {
-                    name: "Sub Sub 1",
-                    id: 2,
-                    children: []
-                }
-            ]
-        },
-        {
-            name: "Rebuttal 2",
-            id: 3,
-            children: []
-        }
-    ]
-}
+// const debugDefault = {
+//     name: "Premise!",
+//     id: 0,
+//     children: [
+//         {
+//             name: "Rebuttal 1",
+//             id: 1,
+//             children: [
+//                 {
+//                     name: "Sub Sub 1",
+//                     id: 2,
+//                     children: []
+//                 }
+//             ]
+//         },
+//         {
+//             name: "Rebuttal 2",
+//             id: 3,
+//             children: []
+//         }
+//     ]
+// }
 const defaultDebate = {
     name: "",
     id: 0,
@@ -39,16 +39,14 @@ const defaultDebate = {
     }]
 }
 const DEBUG = !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-// TODO
 
 
 export default function App() {
-    var [debate, setDebate] = useState(DEBUG ? debugDefault : defaultDebate)
-    var [defs, setDefs] = useState(DEBUG ? [{'word': 'sign', 'definition': 'uhh, its a sign.'}] : [])
+    var [debate, setDebate] = useState(defaultDebate)
+    var [defs, setDefs] = useState([]) // DEBUG ? [{'word': 'sign', 'definition': 'uhh, its a sign.'}] : []
     var [openSidebar, setOpenSidebar] = useState(false)
     const argID = '1'
     const API = API_URL + argID + '/'
-    console.log(API);
 
     function serialize(){
         // TODO just make this a list, and THEN stringify it
@@ -118,7 +116,7 @@ export default function App() {
 
     // To confirm before reloading or closing
     useEffect(() => {
-        axios.get(API + 'get_debate/').then(({data}) => setDebate(JSON.parse(data)))
+        axios.get(API + 'get_debate/').then(({data}) => {console.log(data); setDebate(data)})
 
         const unloadCallback = (event) => {
           event.preventDefault();
