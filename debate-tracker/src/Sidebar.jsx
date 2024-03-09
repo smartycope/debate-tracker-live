@@ -7,8 +7,8 @@ import {isMobile} from 'react-device-detect';
 function Definition({data, setDef, id}){
     return(
         <section className='menu-item'>
-            <input type='text' onChange={e => setDef(id, 'word', e.target.value)} defaultValue={data.word} placeholder='Word'></input>
-            <textarea onChange={e => setDef(id, 'definition', e.target.value)} defaultValue={data.definition} placeholder='Definition'></textarea>
+            <input type='text' onBlur={e => setDef(id, 'word', e.target.value)} defaultValue={data.word} placeholder='Word'></input>
+            <textarea onBlur={e => setDef(id, 'definition', e.target.value)} defaultValue={data.definition} placeholder='Definition'></textarea>
         </section>
     )
 }

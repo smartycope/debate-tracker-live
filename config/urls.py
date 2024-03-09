@@ -30,7 +30,9 @@ urlpatterns = [
     path('api/<str:argID>/delete/<int:id>/', views.delete),
     path('api/<str:argID>/new_debate/', views.new_debate),
     path('api/<str:argID>/get_debate/', views.get_debate),
+    path('api/<str:argID>/get_whole_debate/', views.get_whole_debate),
     path('api/<str:argID>/check_exists/', views.check_exists),
+    path('api/get_all_debates/', views.get_all_debates),
     # Definitions
     path('api/<str:argID>/get_defs/', views.get_defs),
     path('api/<str:argID>/clear_defs/', views.clear_defs),

@@ -16,7 +16,10 @@ export function addToTree(originalTree, newNode, parentId, sibling=false) {
     function addToCopy(copy, node, id) {
       if (copy.id === id || (copy.children.map(child => child.id).includes(id) && sibling)) {
         // If the current node has the specified ID, add the new node as a child
-        copy.children.push(node);
+        if (copy.children)
+            copy.children.push(node);
+        else
+            copy.children = [node]
         return;
       }
 

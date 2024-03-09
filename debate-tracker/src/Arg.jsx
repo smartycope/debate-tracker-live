@@ -49,7 +49,6 @@ export default function Arg({node, debate, setDebate, argID, last=false, premise
             )
     }
 
-
     const area = <pre
         className="editable"
         contentEditable='true'

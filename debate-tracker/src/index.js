@@ -7,7 +7,7 @@ import App from './App';
 import { BrowserRouter } from "react-router-dom";
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-import { Router, Routes, Route } from "react-router"
+import { Routes, Route } from "react-router"
 import Landing from './Landing';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

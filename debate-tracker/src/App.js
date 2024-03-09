@@ -1,34 +1,12 @@
 import './App.css';
 import Arg from './Arg';
 import { useEffect, useState } from 'react';
-// import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
 import Sidebar from './Sidebar';
 import axios from "axios";
 import { API_URL } from "./constants"
+import { useNavigate, useParams } from 'react-router';
 
 
-// const debugDefault = {
-//     name: "Premise!",
-//     id: 0,
-//     children: [
-//         {
-//             name: "Rebuttal 1",
-//             id: 1,
-//             children: [
-//                 {
-//                     name: "Sub Sub 1",
-//                     id: 2,
-//                     children: []
-//                 }
-//             ]
-//         },
-//         {
-//             name: "Rebuttal 2",
-//             id: 3,
-//             children: []
-//         }
-//     ]
-// }
 const defaultDebate = {
     name: "",
     id: 0,
@@ -38,20 +16,20 @@ const defaultDebate = {
         children: []
     }]
 }
-const DEBUG = !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+// const DEBUG = !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
 
 
 export default function App() {
-    var [debate, setDebate] = useState(defaultDebate)
-    var [defs, setDefs] = useState([]) // DEBUG ? [{'word': 'sign', 'definition': 'uhh, its a sign.'}] : []
-    var [openSidebar, setOpenSidebar] = useState(false)
-    var [noServer, setNoServer] = useState(false)
-    const argID = '1'
+    const [debate, setDebate] = useState(defaultDebate)
+    const [defs, setDefs] = useState([])
+    const [openSidebar, setOpenSidebar] = useState(false)
+    const [errMsg, setErrMsg] = useState(null)
+    const { argID } = useParams()
+    const navigate = useNavigate()
     const API = API_URL + argID + '/'
 
     function serialize(){
-        // TODO just make this a list, and THEN stringify it
-        return '[' + JSON.stringify(debate) + ", " + JSON.stringify(defs) + ']'
+        return JSON.stringify([debate, defs])
     }
 
     const handleDownload = e => {
@@ -78,8 +56,12 @@ export default function App() {
             var reader = new FileReader()
             reader.onload = function(e) {
                 const [_debate, _defs] = JSON.parse(e.target.result)
-                axios.post(API + 'load/', _debate).then(() => setDebate(_debate))
-                axios.post(API + 'load_defs/', _defs).then(() => setDefs(_defs))
+                axios.post(API + 'load/', _debate)
+                axios.post(API + 'load_defs/', _defs)
+                window.location.reload()
+                // TODO: eventually figure out how to overwrite stuff in text boxes with a defaultValue set
+                // setDebate(_debate)
+                // setDefs(_defs)
             }
             reader.readAsText(e.target.files[0]);
         } else
@@ -115,27 +97,45 @@ export default function App() {
         axios.post(API + 'new_def/').then(() => setDefs(copy))
     }
 
-    // To confirm before reloading or closing
     useEffect(() => {
-        try {
-            axios.get(API + 'get_debate/').then(({data}) => {console.log(data); setDebate(data)})
-        } catch{
-            setNoServer(true)
-            console.log('Here!');
-        }
+        // Load the debate with the correct data
+        axios.get(API + 'get_whole_debate/')
+            .then(({data}) => {
+                // console.log(data);
+                const [_debate, _defs] = data
+                setDebate(_debate)
+                setDefs(_defs)
+            })
+            .catch((err) => {
+                switch (err.code){
+                    case "ERR_BAD_REQUEST":
+                        setErrMsg(<>
+                            <h2>Invalid Debate</h2>
+                            <button onClick={e => navigate('/')}>Go Home</button>
+                        </>)
+                        break
+                    case "ERR_NETWORK":
+                        setErrMsg(<h2>Can't find server. Is it on?</h2>)
+                        break
+                    default:
+                        console.log(err)
+                        setErrMsg(<h2>Unknown Server Error</h2>)
+                }
+            })
 
-        const unloadCallback = (event) => {
-          event.preventDefault();
-          event.returnValue = "";
-          return "";
-        };
+        // // To confirm before reloading or closing
+        // const unloadCallback = (event) => {
+        //     event.preventDefault();
+        //     event.returnValue = "";
+        //     return "";
+        // }
 
-        window.addEventListener("beforeunload", unloadCallback);
-        return () => window.removeEventListener("beforeunload", unloadCallback);
-    }, [API])
+        // window.addEventListener("beforeunload", unloadCallback);
+        // return () => window.removeEventListener("beforeunload", unloadCallback);
+    }, [API, navigate])
 
-    if (noServer)
-        return <h2>Server Error (is it running?)</h2>
+    if (errMsg !== null)
+        return errMsg
 
     return (
     <div className="App">
@@ -152,12 +152,15 @@ export default function App() {
             </div>
             <div className='buttons-group'>
                 <button className="download-button" onClick={handleDownload}>💾 Dowload Debate</button>
-                <label  htmlFor="fileInput" className="label-for-file">📂 Load Debate</label>
-                <input  className="load-button" type="file" id="fileInput" className="input-for-file" onChange={handleFileSelection}/>
+                <label htmlFor="fileInput" className="label-for-file">📂 Load Debate</label>
+                <input type="file" id="fileInput" className="input-for-file" onChange={handleFileSelection}/>
             </div>
             <div className='buttons-group'>
                 <button className="expand-button" onClick={handleOpenAll}>📖 Expand All</button>
                 <button className="collapse-button" onClick={handleCloseAll}>📕 Collapse All</button>
+            </div>
+            <div className='buttons-group'>
+                <button onClick={e => navigate('/')}>🏠 Go to Home Page</button>
             </div>
         </div>
     </div>
