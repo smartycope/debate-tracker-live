@@ -164,6 +164,8 @@ def delete_debate(request, argID):
         del definitions[argID]
         return Response(status=status.HTTP_202_ACCEPTED)
     else:
+        if request.data != delete_debate_password:
+            print(f'Invalid password attempt: `{request.data}`')
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
