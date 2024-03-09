@@ -1,21 +1,18 @@
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
-from anytree import Node, find, find_by_attr, RenderTree
+from django.http import HttpResponse
+from anytree import Node, find, find_by_attr, RenderTree, findall_by_attr
 from anytree.importer import JsonImporter, DictImporter
 from anytree.exporter import JsonExporter, DictExporter
 from anytree.search import findall
-from django.urls import reverse
 import json
-from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
-from .serializers import *
 from typing import Literal
 from django.utils.text import slugify
-# from ..config.settings import DEBUG
-DEBUG = False
+
+# Only I have access to the server logs, so just leave this on
+DEBUG = True
 
 
 if DEBUG:
@@ -38,9 +35,18 @@ def _parse_response(request):
 def _countNodes(tree):
     return len(findall(tree, lambda *_: True))
 
-def ensure_debate_exists(func):
+def ensure_debate_exists_and_is_valid(func):
     def inner(request, argID, *args, **kwargs):
+        global debates, definitions
+
         argID = slugify(argID)
+
+        # Check for duplicate ids and remove extras if there are any
+        nodes = findall_by_attr(debates[argID], id, 'id')
+        if len(nodes) > 1:
+            for i in revered(range(len(nodes)-1)):
+                nodes[i].parent = None
+
         if argID not in debates:
             if DEBUG: print(f'{argID} (of type {type(argID)}) is not a debate')
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -54,7 +60,7 @@ def ensure_debate_exists(func):
 
 # Debates
 @api_view(['PUT'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def edit(request, id, argID):
     global debates
     node = find_by_attr(debates[argID], id, 'id')
@@ -64,7 +70,7 @@ def edit(request, id, argID):
     return Response(status=status.HTTP_202_ACCEPTED)
 
 @api_view(['POST'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def add_sibling(request, id, argID):
     global debates
     node = find_by_attr(debates[argID], id, 'id')
@@ -74,7 +80,7 @@ def add_sibling(request, id, argID):
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def add_child(request, id, argID):
     global debates
     node = find_by_attr(debates[argID], id, 'id')
@@ -84,7 +90,7 @@ def add_child(request, id, argID):
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def load(request, argID):
     global debates
     print(request)
@@ -93,7 +99,7 @@ def load(request, argID):
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def clear(request, argID):
     global debates
     # debates[argID] = Node("Premise")
@@ -104,7 +110,7 @@ def clear(request, argID):
     # return HttpResponseRedirect(reverse("tree:index", kwargs={"argID": argID}))
 
 @api_view(['DELETE'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def delete(request, id, argID):
     global debates
     node = find_by_attr(debates[argID], id, 'id')
@@ -129,7 +135,7 @@ def new_debate(request, argID):
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def get_debate(request, argID):
     global debates
     return HttpResponse(JsonExporter().export(debates[argID]))
@@ -137,61 +143,62 @@ def get_debate(request, argID):
 @api_view(['GET'])
 def check_exists(request, argID):
     global debates
-    return HttpResponse(argID in debates)
+    return HttpResponse(slugify(argID) in debates)
 
 @api_view(['GET'])
 def get_all_debates(request):
     global debates
-    # return HttpResponse([list(debates.keys()), [premise.name for premise in debates.values()]])
     return HttpResponse(json.dumps([[key, premise.name] for key, premise in debates.items()]))
-    # return HttpResponse([(key, premise.)])
 
 @api_view(['GET'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def get_whole_debate(request, argID):
     global debates, definitions
     return HttpResponse(json.dumps([DictExporter().export(debates[argID]), definitions[argID]]))
 
 @api_view(['DELETE'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def delete_debate(request, argID):
     global debates, definitions
-    if request.data == delete_debate_password:
+    if request.data == delete_debate_password and argID in debates:
         del debates[argID]
         del definitions[argID]
-    return Response(status=status.HTTP_202_ACCEPTED)
+        return Response(status=status.HTTP_202_ACCEPTED)
+    else:
+        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
 
 
 # Definitions
 @api_view(['GET'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def get_defs(request, argID):
     global definitions
     return HttpResponse(json.dumps(definitions[argID]))
 
 @api_view(['DELETE'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def clear_defs(request, argID):
     global definitions
     definitions[argID] = []
     return Response(status=status.HTTP_205_RESET_CONTENT)
 
 @api_view(['POST'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def new_def(request, argID):
     global definitions
     definitions[argID].append({'word': '', 'definition': ''})
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['PUT'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def edit_def(request, argID, idx, which:Literal['word', 'definition']):
     global definitions
     definitions[argID][idx][which] = _parse_response(request)
     return Response(status=status.HTTP_202_ACCEPTED)
 
 @api_view(['POST'])
-@ensure_debate_exists
+@ensure_debate_exists_and_is_valid
 def load_defs(request, argID):
     global definitions
     definitions[argID] = request.data
@@ -202,8 +209,3 @@ def load_defs(request, argID):
 @api_view(['GET'])
 def i_cant_brew_coffee(request):
     return Response(status=status.HTTP_418_IM_A_TEAPOT)
-
-@api_view(['GET'])
-def debug(request, argID):
-    print(JsonExporter().export(debates[argID]))
-    return Response(status=status.HTTP_204_NO_CONTENT)

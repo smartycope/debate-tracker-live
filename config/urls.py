@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 from tree import views
 
 
@@ -42,6 +42,4 @@ urlpatterns = [
     path('api/<str:argID>/load_defs/', views.load_defs),
     # MISC
     path('api/coffee/', views.i_cant_brew_coffee),
-    path('api/<str:argID>/debug/', views.debug)
-    # TODO add definition urls
 ]
