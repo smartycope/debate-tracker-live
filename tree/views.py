@@ -43,7 +43,7 @@ def ensure_debate_exists_and_is_valid(func):
         # Check for duplicate ids and remove extras if there are any
         nodes = findall_by_attr(debates[argID], id, 'id')
         if len(nodes) > 1:
-            for i in revered(range(len(nodes)-1)):
+            for node in nodes[1::-1]:
                 nodes[i].parent = None
 
         if argID not in debates:
@@ -56,13 +56,17 @@ def ensure_debate_exists_and_is_valid(func):
             return rtn
     return inner
 
+def _get_node(argId, id):
+    nodes = findall_by_attr(debates[argID], id, 'id')
+    if len(nodes):
+        return nodes[0]
 
 # Debates
 @api_view(['PUT'])
 @ensure_debate_exists_and_is_valid
 def edit(request, id, argID):
     global debates
-    node = find_by_attr(debates[argID], id, 'id')
+    node = _get_node(argID, id)
     if not node:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     node.name = _parse_response(request)
@@ -72,7 +76,7 @@ def edit(request, id, argID):
 @ensure_debate_exists_and_is_valid
 def add_sibling(request, id, argID):
     global debates
-    node = find_by_attr(debates[argID], id, 'id')
+    node = _get_node(argID, id)
     if not node:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     Node('', parent=node.parent, id=_countNodes(debates[argID]))
@@ -82,7 +86,7 @@ def add_sibling(request, id, argID):
 @ensure_debate_exists_and_is_valid
 def add_child(request, id, argID):
     global debates
-    node = find_by_attr(debates[argID], id, 'id')
+    node = _get_node(argID, id)
     if not node:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     Node('', parent=node, id=_countNodes(debates[argID]))
@@ -112,7 +116,7 @@ def clear(request, argID):
 @ensure_debate_exists_and_is_valid
 def delete(request, id, argID):
     global debates
-    node = find_by_attr(debates[argID], id, 'id')
+    node = _get_node(argID, id)
     if not node:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     else:
