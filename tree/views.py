@@ -56,7 +56,7 @@ def ensure_debate_exists_and_is_valid(func):
             return rtn
     return inner
 
-def _get_node(argId, id):
+def _get_node(argID, id):
     nodes = findall_by_attr(debates[argID], id, 'id')
     if len(nodes):
         return nodes[0]
