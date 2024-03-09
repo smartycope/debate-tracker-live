@@ -21,14 +21,17 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
+    - name: Install Django Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Start Django Server
       run: |
         python manage.py runserver 0.0.0.0:8000
-    - name: Start React Server
+    - name: Install React Dependencies
       run: |
         cd debate-tracker
+        npm install
+    - name: Start React Server
+      run: |
         npm start
