@@ -11,8 +11,7 @@ from rest_framework import status
 from typing import Literal
 from django.utils.text import slugify
 
-# Only I have access to the server logs, so just leave this on
-DEBUG = True
+DEBUG = False
 
 
 if DEBUG:
@@ -48,12 +47,12 @@ def ensure_debate_exists_and_is_valid(func):
                 nodes[i].parent = None
 
         if argID not in debates:
-            if DEBUG: print(f'{argID} (of type {type(argID)}) is not a debate')
+            print(f'{argID} (of type {type(argID)}) is not a debate')
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
             rtn = func(request, argID=argID, *args, **kwargs)
-            if DEBUG: print('Current debate:\n', RenderTree(debates[argID]).by_attr())
-            if DEBUG: print('Current defs:\n', definitions[argID])
+            print('Current debate:\n', RenderTree(debates[argID]).by_attr())
+            print('Current defs:\n', definitions[argID])
             return rtn
     return inner
 
