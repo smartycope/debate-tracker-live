@@ -27,6 +27,7 @@ else:
     # Structure: {argID: [{"word": "", "definition": ""}, ]}
     definitions = {}
 
+delete_debate_password = "simon-says"
 
 def _parse_response(request):
     if len(resp := list(request.data.keys())):
@@ -117,6 +118,7 @@ def delete(request, id, argID):
 def new_debate(request, argID):
     global debates
     global definitions
+    argID = slugify(argID)
     if argID in debates:
         return Response(status=status.HTTP_303_SEE_OTHER)
     else:
@@ -144,12 +146,20 @@ def get_all_debates(request):
     return HttpResponse(json.dumps([[key, premise.name] for key, premise in debates.items()]))
     # return HttpResponse([(key, premise.)])
 
-
 @api_view(['GET'])
 @ensure_debate_exists
 def get_whole_debate(request, argID):
     global debates, definitions
     return HttpResponse(json.dumps([DictExporter().export(debates[argID]), definitions[argID]]))
+
+@api_view(['DELETE'])
+@ensure_debate_exists
+def delete_debate(request, argID):
+    global debates, definitions
+    if request.data == delete_debate_password:
+        del debates[argID]
+        del definitions[argID]
+    return Response(status=status.HTTP_202_ACCEPTED)
 
 
 # Definitions

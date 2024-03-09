@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/<str:argID>/load/", views.load),
     path("api/<str:argID>/clear/", views.clear),
     path('api/<str:argID>/delete/<int:id>/', views.delete),
+    path('api/<str:argID>/delete_debate/', views.delete_debate),
     path('api/<str:argID>/new_debate/', views.new_debate),
     path('api/<str:argID>/get_debate/', views.get_debate),
     path('api/<str:argID>/get_whole_debate/', views.get_whole_debate),
