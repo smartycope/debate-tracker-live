@@ -12,20 +12,34 @@ from rest_framework import status
 from typing import Literal
 from django.utils.text import slugify
 from time import time as now
+from pathlib import Path
 
-DEBUG = True
+DEBUG = False
 LOGS = True
 delete_debate_password = "simon-says"
+DEBATES_SAVE_PATH = (Path.home() / "debates.json").absolute()
+DEFS_SAVE_PATH = (Path.home() / "definitions.json").absolute()
+
+# Debates Structure: {argID: rootNode}
+# Definitions Structure: {argID: [{"word": "", "definition": ""}, ]}
 
 
 if DEBUG:
     debates = {'1': Node('premise', id=0, children=[Node('arg1', id=1, children=[])]), slugify('All drugs should be legal'): Node('All drugs should be legal.', id=0, children=[Node('Because theyre tasty', id=1, children=[])])}
     definitions = {'1': [{"word": "from Django", "definition": "def"}], slugify('All drugs should be legal'): []}
 else:
-    # Structure: {argID: rootNode}
     debates = {}
-    # Structure: {argID: [{"word": "", "definition": ""}, ]}
-    definitions = {}
+    if DEBATES_SAVE_PATH.exists():
+        with open(DEBATES_SAVE_PATH, 'r') as f:
+            loaded = json.load(f)
+            for argID, tree in loaded.items():
+                debates[argID] = DictImporter().import_(tree)
+
+    if DEFS_SAVE_PATH.exists():
+        with open(DEFS_SAVE_PATH, 'r') as f:
+            definitions = json.load(f)
+    else:
+        definitions = {}
 
 
 if LOGS: print('Top-level running')
@@ -49,7 +63,6 @@ def _get_next_id(tree):
     rtn = round(now() * 10000)
     print("creating node with id", rtn)
     return rtn
-
 
 def ensure_debate_exists_and_is_valid(func):
     def inner(request, argID, *args, **kwargs):
@@ -240,3 +253,20 @@ def load_defs(request, argID):
 @api_view(['GET'])
 def i_cant_brew_coffee(request):
     return Response(status=status.HTTP_418_IM_A_TEAPOT)
+
+@api_view(['POST'])
+def save_all(request):
+    # if not DEBATES_SAVE_PATH.exists():
+    DEBATES_SAVE_PATH.touch()
+    # if not DEFS_SAVE_PATH.exists():
+    DEFS_SAVE_PATH.touch()
+
+    with open(DEBATES_SAVE_PATH, 'w') as f:
+        json.dump({argID: DictExporter().export(tree) for argID, tree in debates.items()}, f)
+    with open(DEFS_SAVE_PATH, 'w') as f:
+        json.dump(definitions, f)
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+# await fetch("https://smartycope.pythonanywhere.com/api/save_debate", {method: "POST"})
+# await fetch("https://localhost:8000/api/save_debate", {method: "POST"})

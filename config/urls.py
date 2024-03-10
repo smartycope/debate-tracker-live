@@ -42,4 +42,5 @@ urlpatterns = [
     path('api/<str:argID>/load_defs/', views.load_defs),
     # MISC
     path('api/coffee/', views.i_cant_brew_coffee),
+    path('api/save_all/', views.save_all),
 ]
