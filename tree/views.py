@@ -256,15 +256,15 @@ def i_cant_brew_coffee(request):
 
 @api_view(['POST'])
 def save_all(request):
-    # if not DEBATES_SAVE_PATH.exists():
     DEBATES_SAVE_PATH.touch()
-    # if not DEFS_SAVE_PATH.exists():
     DEFS_SAVE_PATH.touch()
 
     with open(DEBATES_SAVE_PATH, 'w') as f:
         json.dump({argID: DictExporter().export(tree) for argID, tree in debates.items()}, f)
     with open(DEFS_SAVE_PATH, 'w') as f:
         json.dump(definitions, f)
+
+    if LOGS: print("Saved debates!")
 
     return Response(status=status.HTTP_204_NO_CONTENT)
 
