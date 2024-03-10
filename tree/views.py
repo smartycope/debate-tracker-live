@@ -3,6 +3,7 @@ from anytree import Node, find, find_by_attr, RenderTree, findall_by_attr
 from anytree.importer import JsonImporter, DictImporter
 from anytree.exporter import JsonExporter, DictExporter
 from anytree.search import findall
+from anytree.iterators import PreOrderIter
 import json
 from django.conf import settings
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from typing import Literal
 from django.utils.text import slugify
+from time import time as now
 
 DEBUG = True
 LOGS = True
@@ -17,8 +19,8 @@ delete_debate_password = "simon-says"
 
 
 if DEBUG:
-    debates = {'1': Node('premise', id=0, children=[Node('arg1', id=1, children=[])]), slugify('Does Ethan suck?'): Node('Ethan Sucks', id=0, children=[Node('No he doesnt!', id=1, children=[])])}
-    definitions = {'1': [{"word": "from Django", "definition": "def"}], slugify('Does Ethan suck?'): []}
+    debates = {'1': Node('premise', id=0, children=[Node('arg1', id=1, children=[])]), slugify('All drugs should be legal'): Node('All drugs should be legal.', id=0, children=[Node('Because theyre tasty', id=1, children=[])])}
+    definitions = {'1': [{"word": "from Django", "definition": "def"}], slugify('All drugs should be legal'): []}
 else:
     # Structure: {argID: rootNode}
     debates = {}
@@ -35,8 +37,19 @@ def _parse_response(request):
     else:
         return
 
-def _countNodes(tree):
-    return len(findall(tree, lambda *_: True))
+def _get_next_id(tree):
+    # This should work, actually
+    # biggest = Node('', id=-1)
+    # for node in PreOrderIter(tree):
+    #     if node.id > biggest.id:
+    #         biggest = node
+    # print("creating new node with id", biggest.id + 1)
+    # return biggest.id + 1
+    # This is kind of a better solution anyway.
+    rtn = round(now() * 10000)
+    print("creating node with id", rtn)
+    return rtn
+
 
 def ensure_debate_exists_and_is_valid(func):
     def inner(request, argID, *args, **kwargs):
@@ -56,8 +69,8 @@ def ensure_debate_exists_and_is_valid(func):
                     nodes[i].parent = None
 
             rtn = func(request, argID=argID, *args, **kwargs)
-            if LOGS: print('Current debate:\n', DictExporter().export(debates[argID]))
-            if LOGS: print('Current defs:\n', definitions[argID])
+            if LOGS and DEBUG: print('Current debate:\n', DictExporter().export(debates[argID]))
+            if LOGS and DEBUG: print('Current defs:\n', definitions[argID])
             return rtn
     return inner
 
@@ -65,6 +78,7 @@ def _get_node(argID, id):
     nodes = findall_by_attr(debates[argID], id, 'id')
     if len(nodes):
         return nodes[0]
+
 
 # Debates
 @api_view(['PUT'])
@@ -86,7 +100,7 @@ def add_sibling(request, id, argID):
     if not node:
         if LOGS: print(f'Invalid sibling creation request given: id: {id}, argID: {argID}')
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    Node('', parent=node.parent, id=_countNodes(debates[argID]))
+    Node('', parent=node.parent, id=_get_next_id(debates[argID]))
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
@@ -97,7 +111,7 @@ def add_child(request, id, argID):
     if not node:
         if LOGS: print(f'Invalid child creation request given: id: {id}, argID: {argID}')
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    Node('', parent=node, id=_countNodes(debates[argID]))
+    Node('', parent=node, id=_get_next_id(debates[argID]))
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
@@ -182,7 +196,6 @@ def delete_debate(request, argID):
         else:
             if LOGS: print(f'Cant delete debate, it doesnt exist: {argID}')
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-
 
 
 # Definitions
