@@ -12,6 +12,8 @@ from typing import Literal
 from django.utils.text import slugify
 
 DEBUG = False
+LOGS = True
+delete_debate_password = "simon-says"
 
 
 if DEBUG:
@@ -23,7 +25,9 @@ else:
     # Structure: {argID: [{"word": "", "definition": ""}, ]}
     definitions = {}
 
-delete_debate_password = "simon-says"
+
+if LOGS: print('Top-level running')
+
 
 def _parse_response(request):
     if len(resp := list(request.data.keys())):
@@ -44,15 +48,16 @@ def ensure_debate_exists_and_is_valid(func):
         nodes = findall_by_attr(debates[argID], id, 'id')
         if len(nodes) > 1:
             for node in nodes[1::-1]:
+                if LOGS: print('Found duplicate nodes, deleting one')
                 nodes[i].parent = None
 
         if argID not in debates:
-            print(f'{argID} (of type {type(argID)}) is not a debate')
+            if LOGS: print(f'{argID} (of type {type(argID)}) is not a debate')
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
             rtn = func(request, argID=argID, *args, **kwargs)
-            print('Current debate:\n', RenderTree(debates[argID]).by_attr())
-            print('Current defs:\n', definitions[argID])
+            if LOGS: print('Current debate:\n', DictExporter().export(debates[argID]))
+            if LOGS: print('Current defs:\n', definitions[argID])
             return rtn
     return inner
 
@@ -68,6 +73,7 @@ def edit(request, id, argID):
     global debates
     node = _get_node(argID, id)
     if not node:
+        if LOGS: print(f'Invalid edit request given: id: {id}, argID: {argID}')
         return Response(status=status.HTTP_400_BAD_REQUEST)
     node.name = _parse_response(request)
     return Response(status=status.HTTP_202_ACCEPTED)
@@ -78,6 +84,7 @@ def add_sibling(request, id, argID):
     global debates
     node = _get_node(argID, id)
     if not node:
+        if LOGS: print(f'Invalid sibling creation request given: id: {id}, argID: {argID}')
         return Response(status=status.HTTP_400_BAD_REQUEST)
     Node('', parent=node.parent, id=_countNodes(debates[argID]))
     return Response(status=status.HTTP_201_CREATED)
@@ -88,6 +95,7 @@ def add_child(request, id, argID):
     global debates
     node = _get_node(argID, id)
     if not node:
+        if LOGS: print(f'Invalid child creation request given: id: {id}, argID: {argID}')
         return Response(status=status.HTTP_400_BAD_REQUEST)
     Node('', parent=node, id=_countNodes(debates[argID]))
     return Response(status=status.HTTP_201_CREATED)
@@ -96,8 +104,7 @@ def add_child(request, id, argID):
 @ensure_debate_exists_and_is_valid
 def load(request, argID):
     global debates
-    print(request)
-    print(request.data)
+    if LOGS: print(f'Loading new debate into debate {argID}')
     debates[argID] = DictImporter().import_(request.data)
     return Response(status=status.HTTP_201_CREATED)
 
@@ -105,12 +112,11 @@ def load(request, argID):
 @ensure_debate_exists_and_is_valid
 def clear(request, argID):
     global debates
-    # debates[argID] = Node("Premise")
+    if LOGS: print(f'Clearing debate {argID}')
     premise = Node('', id=0)
     Node('', id=1, parent=premise)
     debates[argID] = premise
     return Response(status=status.HTTP_205_RESET_CONTENT)
-    # return HttpResponseRedirect(reverse("tree:index", kwargs={"argID": argID}))
 
 @api_view(['DELETE'])
 @ensure_debate_exists_and_is_valid
@@ -118,6 +124,7 @@ def delete(request, id, argID):
     global debates
     node = _get_node(argID, id)
     if not node:
+        if LOGS: print(f'Invalid delete request given. argID: {argID}')
         return Response(status=status.HTTP_400_BAD_REQUEST)
     else:
         node.parent = None
@@ -125,16 +132,17 @@ def delete(request, id, argID):
 
 @api_view(['POST'])
 def new_debate(request, argID):
-    global debates
-    global definitions
+    global debates, definitions
     argID = slugify(argID)
     if argID in debates:
+        if LOGS: print(f'New debate requested, but it already exists: {argID}')
         return Response(status=status.HTTP_303_SEE_OTHER)
     else:
         premise = Node('', id=0)
         Node('', id=1, parent=premise)
         debates[argID] = premise
         definitions[argID] = []
+    if LOGS: print(f'New debate created: {argID}')
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
@@ -166,10 +174,13 @@ def delete_debate(request, argID):
     if request.data == delete_debate_password and argID in debates:
         del debates[argID]
         del definitions[argID]
+        if LOGS: print(f'Deleted debate: {argID}')
         return Response(status=status.HTTP_202_ACCEPTED)
     else:
         if request.data != delete_debate_password:
-            print(f'Invalid password attempt: `{request.data}`')
+            if LOGS: print(f'Invalid password attempt: `{request.data}`')
+        else:
+            if LOGS: print(f'Cant delete debate, it doesnt exist: {argID}')
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
@@ -185,6 +196,7 @@ def get_defs(request, argID):
 @ensure_debate_exists_and_is_valid
 def clear_defs(request, argID):
     global definitions
+    if LOGS: print(f'Clearing definitions: {argID}')
     definitions[argID] = []
     return Response(status=status.HTTP_205_RESET_CONTENT)
 
@@ -207,6 +219,7 @@ def edit_def(request, argID, idx, which:Literal['word', 'definition']):
 def load_defs(request, argID):
     global definitions
     definitions[argID] = request.data
+    if LOGS: print(f'Definitions added to debate {argID}')
     return Response(status=status.HTTP_201_CREATED)
 
 
