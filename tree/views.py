@@ -11,7 +11,7 @@ from rest_framework import status
 from typing import Literal
 from django.utils.text import slugify
 
-DEBUG = False
+DEBUG = True
 LOGS = True
 delete_debate_password = "simon-says"
 
@@ -44,17 +44,17 @@ def ensure_debate_exists_and_is_valid(func):
 
         argID = slugify(argID)
 
-        # Check for duplicate ids and remove extras if there are any
-        nodes = findall_by_attr(debates[argID], id, 'id')
-        if len(nodes) > 1:
-            for node in nodes[1::-1]:
-                if LOGS: print('Found duplicate nodes, deleting one')
-                nodes[i].parent = None
-
         if argID not in debates:
-            if LOGS: print(f'{argID} (of type {type(argID)}) is not a debate')
+            if LOGS: print(f"Requested debate with argID `{argID}` does not exist")
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
+            # Check for duplicate ids and remove extras if there are any
+            nodes = findall_by_attr(debates[argID], id, 'id')
+            if len(nodes) > 1:
+                for node in nodes[1::-1]:
+                    if LOGS: print('Found duplicate nodes, deleting one')
+                    nodes[i].parent = None
+
             rtn = func(request, argID=argID, *args, **kwargs)
             if LOGS: print('Current debate:\n', DictExporter().export(debates[argID]))
             if LOGS: print('Current defs:\n', definitions[argID])
