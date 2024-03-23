@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from tree import views
+from misc import views as misc
 
 
 urlpatterns = [
@@ -43,4 +44,5 @@ urlpatterns = [
     # MISC
     path('api/coffee/', views.i_cant_brew_coffee),
     path('api/save_all/', views.save_all),
+    path('sex-dice/', misc.sex_dice),
 ]
