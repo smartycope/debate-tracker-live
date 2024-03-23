@@ -40,9 +40,9 @@
     <input type="text" value="" id="b"/>
     <hr/>
     <p>Min Seconds</p>
-    <input type="number" value="120" id="min"/>
+    <input type="number" value="30" id="min"/>
     <p>Max Seconds</p>
-    <input type="number" value="180" id="max"/>
+    <input type="number" value="60" id="max"/>
     <p>Timer Timeout (seconds)</p>
     <input type="number" value="10" id="timeout"/>
     <hr/>
@@ -135,7 +135,7 @@
         ]
 
         // Goofy actions go for this long instead of a normal random amount of time
-        const goofSec = 15
+        const goofSec = 10
         let timerTimeout
 
         let text
