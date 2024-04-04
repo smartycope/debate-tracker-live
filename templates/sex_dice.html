@@ -33,24 +33,24 @@
         <source src="https://cdn.freesound.org/previews/496/496508_8923841-lq.ogg" type="audio/ogg">
     </audio>
 
-    <h1>Welcome to Sex Dice!</h1>
-    <p>Partner 1</p>
+    <h1>Sex Dice</h1>
+    <p>Name of partner 1</p>
     <input type="text" value="" id="a"/>
-    <p>Partner 2</p>
+    <p>Name of partner 2</p>
     <input type="text" value="" id="b"/>
     <hr/>
-    <p>Min Seconds</p>
-    <input type="number" value="30" id="min"/>
-    <p>Max Seconds</p>
-    <input type="number" value="60" id="max"/>
-    <p>Timer Timeout (seconds)</p>
-    <input type="number" value="10" id="timeout"/>
+    <p title="The minimum amount of time the timer lasts for">Min Seconds</p>
+    <input type="number" value="30" id="min" title="The minimum amount of time the timer lasts for"/>
+    <p title="The maximum amount of time the timer lasts for">Max Seconds</p>
+    <input type="number" value="60" id="max" title="The maximum amount of time the timer lasts for"/>
+    <p title="How long the timer will beep before rerolling">Timer Timeout (seconds)</p>
+    <input type="number" value="10" id="timeout" title="How long the timer will beep before rerolling"/>
     <hr/>
     <label for="turns">Take turns instead of random:</label>
     <input type="checkbox" id="turns" name="turns"/>
     <br/>
-    <label title="Include goofy actions" for="goof">Goofy mode</label>
-    <input type="checkbox" id="goof" name="goof" title="Include goofy actions" checked/>
+    <label title="Include goofy actions like 'blow on' and 'impersonate'" for="goof">Goofy mode</label>
+    <input type="checkbox" id="goof" name="goof" title="Include goofy actions like 'blow on' and 'impersonate'" checked/>
     <br/>
     <br/>
     <button id="start">Click to start</button>
@@ -132,6 +132,7 @@
             ['poke',          .1, true],
             ['impersonate',   .1, true],
             ['sniff',         .1, true],
+            ['hug',           .1, true],
         ]
 
         // Goofy actions go for this long instead of a normal random amount of time
